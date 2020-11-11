@@ -29,6 +29,18 @@ selfie-srfg will implement the selfie-system as a real-time environment to serve
 ## Used RISC-V-boards and architecture
 
 We consider using the following hardware for this project:
+
 - Sipeed MAix BiT (K210-architecture)
+
+![alt text](https://miro.medium.com/max/1390/1*gWbpNBY07DhTSt8nUwlnLg.jpeg)
+
 - HiFive Unleashed (FU540-architecture)
+
+![alt text](https://qtxasset.com/sensorsmag/1518099417/TECH_2.JPG?8NaB3TAV.DcqB2f54EapMw092SJMyUsf)
+
 - HiFive-Unmatched (FU740-architecture) - not yet supported
+
+![alt text](https://scr3.golem.de/screenshots/2010/SiFive-HiFive-Unmatched/thumb620/SiFive-HiFive-Unmatched-04.jpg)
+
+
+
