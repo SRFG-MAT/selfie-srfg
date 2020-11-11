@@ -38,7 +38,7 @@ We consider using the following hardware for this project:
 
 <img src="https://www.cnx-software.com/wp-content/uploads/2018/02/SiFive-Freedom-U540.jpg" width="400" height="400" />
 
-- HiFive-Unmatched (FU740-architecture) - not yet supported
+- HiFive Unmatched (FU740-architecture) - not yet supported
 
 <img src="http://linuxgizmos.com/files/sifive_hifiveunmatched_block.jpg" width="400" height="400" />
 
