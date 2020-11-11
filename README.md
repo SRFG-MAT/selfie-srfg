@@ -1,6 +1,6 @@
 # selfie-srfg
 
-This repository is a fork of the Selfie-Platform from the "Computational Systems Research Group" of the University of Salzburg. The "master"-branch of the project is used by Salzburg Research for external development purposes of the project RISClessNaV. The "origin"-branch points to the "master"-branch of the original selfie-repo. Changes made to the original selfie repository by the "Computational Systems Research Group" can be integrated likewise, if needed. 
+This repository is a fork of the Selfie-Platform from the "Computational Systems Research Group" of the University of Salzburg. The "master"-branch of the project is used by Salzburg Research for external development purposes of the project RISClessNaV. The "selfie-master"-branch points to the "master"-branch of the original selfie-repo of the university, likewise "selfie-machine"-branch points to its "machine"-branch. All changes made to the original selfie repository by the "Computational Systems Research Group" can be integrated, if needed. 
 
 For guides, tutorials and corresponding academic work please visit the original repo: https://github.com/cksystemsteaching/selfie
 
