@@ -1,8 +1,19 @@
 # selfie-srfg
 
-This repository is a fork of the Selfie-Platform from the "Computational Systems Research Group" of the University of Salzburg. The "master"-branch of the project is used by Salzburg Research for external development purposes of the project RISClessNaV. The "selfie-master"-branch points to the "master"-branch of the original selfie-repo of the university, likewise "selfie-machine"-branch points to its "machine"-branch. All changes made to the original selfie repository by the "Computational Systems Research Group" can be integrated, if needed. 
+This repository is a fork of the Selfie-Platform from the "Computational Systems Research Group" of the University of Salzburg. This project is used by Salzburg Research for external development purposes of the project RISClessNaV. For guides, tutorials and corresponding academic work please visit the original repo: https://github.com/cksystemsteaching/selfie
 
-For guides, tutorials and corresponding academic work please visit the original repo: https://github.com/cksystemsteaching/selfie
+
+## Steps for working locally with both repos:
+
+- open bash in your local project repo directory
+- "git remote add selfie https://github.com/cksystemsteaching/selfie.git"
+- "git fetch selfie"
+- "git remote -v"  -> output should look like this:
+  origin  https://github.com/SRFG-MAT/selfie-srfg.git (fetch)
+  origin  https://github.com/SRFG-MAT/selfie-srfg.git (push)
+  selfie  https://github.com/cksystemsteaching/selfie.git (fetch)
+  selfie  https://github.com/cksystemsteaching/selfie.git (push)
+- "git checkout -b selfie/<name_of_selfie_branch>"
 
 
 ## Goals for this project
