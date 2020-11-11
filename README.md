@@ -33,6 +33,7 @@ We consider using the following hardware for this project:
 - Sipeed MAix BiT (K210-architecture)
 
 ![alt text](https://miro.medium.com/max/1390/1*gWbpNBY07DhTSt8nUwlnLg.jpeg =100x20)
+![](https://miro.medium.com/max/1390/1*gWbpNBY07DhTSt8nUwlnLg.jpeg =100x20)
 
 - HiFive Unleashed (FU540-architecture)
 
