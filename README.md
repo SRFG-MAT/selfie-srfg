@@ -7,7 +7,7 @@ For guides, tutorials and corresponding academic work please visit the original 
 
 ## Goals for this project
 
-selfie-srfg will implement the selfie-system as a real-time environment to serve as an emergency-braking tool for an autonomously moving robot. All kernel-functions and trap handlers will be liveness-verified. The missing IO-support, OS-kernel-functionality, RT-behaviour, HW-support, trap-handling and all corresponding liveness-verification will be added in the future. Please note that this repository is still under construction and is implemented in close collaboration with Professor Christoph Kirsch and his research team. Please note that potentially at some point within its development, this repository might differ in significant aspects from its origin.
+selfie-srfg will implement the selfie-system as a real-time environment to serve as an emergency-braking tool for an autonomously moving robot. All kernel-functions and trap handlers will be liveness-verified. The missing IO-support, OS-kernel-functionality, RT-behaviour, HW-support, trap-handling and all corresponding liveness-verification will be added in the future. Please note that this repository is still under construction and is implemented in close collaboration with Professor Christoph Kirsch (http://cs.uni-salzburg.at/~ck/) and his research team. Please note that potentially at some point within its development, this repository might differ in significant aspects from its origin.
 
 
 ## Used RISC-V-boards and architecture
