@@ -5,7 +5,7 @@ This repository is a fork of the Selfie-Platform from the "Computational Systems
 
 ## Steps for working locally with both repos:
 
-- open bash in your local project repo directory
+- checkout this repo and open bash in your local project repo directory
 - "git remote add selfie https://github.com/cksystemsteaching/selfie.git"
 - "git fetch selfie"
 - "git remote -v"  -> output should look like this:
