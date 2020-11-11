@@ -9,10 +9,10 @@ This repository is a fork of the Selfie-Platform from the "Computational Systems
 - "git remote add selfie https://github.com/cksystemsteaching/selfie.git"
 - "git fetch selfie"
 - "git remote -v"  -> output should look like this:
-  -- origin  https://github.com/SRFG-MAT/selfie-srfg.git (fetch)
-  -- origin  https://github.com/SRFG-MAT/selfie-srfg.git (push)
-  -- selfie  https://github.com/cksystemsteaching/selfie.git (fetch)
-  -- selfie  https://github.com/cksystemsteaching/selfie.git (push)
+  - origin  https://github.com/SRFG-MAT/selfie-srfg.git (fetch)
+  - origin  https://github.com/SRFG-MAT/selfie-srfg.git (push)
+  - selfie  https://github.com/cksystemsteaching/selfie.git (fetch)
+  - selfie  https://github.com/cksystemsteaching/selfie.git (push)
 - "git checkout -b selfie/<name_of_selfie_branch>"
 
 
