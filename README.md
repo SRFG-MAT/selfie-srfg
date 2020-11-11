@@ -32,15 +32,15 @@ We consider using the following hardware for this project:
 
 - Sipeed MAix BiT (K210-architecture)
 
-<img src="https://miro.medium.com/max/1390/1*gWbpNBY07DhTSt8nUwlnLg.jpeg" width="200" height="200" />
+<img src="https://miro.medium.com/max/1390/1*gWbpNBY07DhTSt8nUwlnLg.jpeg" width="400" height="400" />
 
 - HiFive Unleashed (FU540-architecture)
 
-<img src="https://www.cnx-software.com/wp-content/uploads/2018/02/SiFive-Freedom-U540.jpg" width="200" height="200" />
+<img src="https://www.cnx-software.com/wp-content/uploads/2018/02/SiFive-Freedom-U540.jpg" width="400" height="400" />
 
 - HiFive-Unmatched (FU740-architecture) - not yet supported
 
-<img src="https://scr3.golem.de/screenshots/2010/SiFive-HiFive-Unmatched/thumb620/SiFive-HiFive-Unmatched-04.jpg" width="200" height="200" />
+<img src="https://scr3.golem.de/screenshots/2010/SiFive-HiFive-Unmatched/thumb620/SiFive-HiFive-Unmatched-04.jpg" width="400" height="400" />
 
 
 
