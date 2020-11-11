@@ -34,6 +34,7 @@ We consider using the following hardware for this project:
 
 ![alt text](https://miro.medium.com/max/1390/1*gWbpNBY07DhTSt8nUwlnLg.jpeg =100x20)
 ![](https://miro.medium.com/max/1390/1*gWbpNBY07DhTSt8nUwlnLg.jpeg =100x20)
+<img src="https://miro.medium.com/max/1390/1*gWbpNBY07DhTSt8nUwlnLg.jpeg" width="200" height="200" />
 
 - HiFive Unleashed (FU540-architecture)
 
