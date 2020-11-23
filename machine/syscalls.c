@@ -1,90 +1,121 @@
-#include "syscall.h"
+#include "filesystem.h"
+#include "syscalls.h"
 #include "console.h"
-#include "sbi_files.h"
+#include "tinycstd.h"
 
-#define NUM_FDS 32
+#include "compiler-utils.h"
 
-static FILEDESC open_files[NUM_FDS];
+#define OPEN_FILE_FD_OFFSET 3
 
-ssize_t read(int fd, char* buf, size_t count) {
-    if (fd >= NUM_FDS+1) {
-        return -1;
-    } else {
-        FILEDESC* desc = (open_files+fd);
+bool fd_is_stdio(int fd) {
+  return (fd >= 0) && (fd <= 2);
+}
 
-        uint64_t num_read = 0;
-        while (count) {
-            if (desc->pos >= desc->file->length)
-                break;
+bool fd_is_valid(int fd, size_t num_fds) {
+  return (fd >= 0) && (((uint32_t) fd) < num_fds + OPEN_FILE_FD_OFFSET);
+}
 
-            *(buf++) = desc->file->data[desc->pos];
+FILEDESC* get_fd_entry(int fd, FILEDESC* open_files, size_t num_fds) {
+  if (!fd_is_valid(fd, num_fds))
+    return NULL;
 
-            --count;
-            num_read++;
-            desc->pos++;
-        }
-        return num_read;
+  // There's no FILEDESC for stdin/stdout/stderr
+  if (fd_is_stdio(fd))
+    return NULL;
+
+  return open_files + (fd - OPEN_FILE_FD_OFFSET);
+}
+
+bool fd_entry_is_opened(FILEDESC* entry) {
+  return (entry != NULL) && (entry->file != NULL);
+}
+
+bool fd_is_opened(int fd, FILEDESC* open_files, size_t num_fds) {
+  FILEDESC* entry = get_fd_entry(fd, open_files, num_fds);
+  // If an entry is NULL, fd is either invalid or an stdio special fd
+  if (entry == NULL)
+    return fd_is_stdio(fd);
+
+  return fd_entry_is_opened(entry);
+}
+
+
+ssize_t kread(int fd, char* buf, size_t count, FILEDESC* open_files, size_t num_fds) {
+  if (!fd_is_valid(fd, num_fds))
+    return -1;
+
+  if (fd_is_stdio(fd)) {
+    // TODO: No stdin yet
+    return -1;
+  } else {
+    FILEDESC* desc = get_fd_entry(fd, open_files, num_fds);
+    if (!fd_entry_is_opened(desc))
+      return -1;
+
+    uint64_t num_read = 0;
+    while (count) {
+      if (desc->pos >= desc->file->length)
+          break;
+
+      *(buf++) = desc->file->data[desc->pos];
+
+      --count;
+      num_read++;
+      desc->pos++;
     }
+    return num_read;
+  }
 }
 
-intmax_t write(int fd, const char* buf, size_t count) {
-    // No file descriptor support yet for write - write to console instead
+intmax_t kwrite(int fd, const char* buf, size_t count, FILEDESC* open_files, size_t num_fds) {
+  UNUSED_VAR(open_files);
+  UNUSED_VAR(num_fds);
+  // No file descriptor support yet for write - write to console instead
 
-    if (fd != 1)
-        return -1;
+  // only allow writes to stdin (0), stdout (1) or stderr (2)
+  if (!fd_is_stdio(fd))
+    return -1;
 
-    size_t i = 0;
-    const char* charBuf = (const char*) buf;
-
-    return console_puts(buf, count);
+  return console_puts(buf, count);
 }
 
-void exit(int status) {
-    write(1, ">EXIT called<\n", 14);
-    while (1)
-        ;
-}
+int last_allocated_fd = OPEN_FILE_FD_OFFSET - 1;
+int kopen(const char* filename, int flags, FILEDESC* open_files, size_t num_fds) {
+  const int O_RDONLY = 0x0;
+  const int _O_BINARY = 0x8000;
+  const KFILE* file = files;
 
-int open(const char* filename, int flags) {
-    const FILE* file = files;
+  if (flags != O_RDONLY && flags != (_O_BINARY | O_RDONLY))
+    return -1;
 
-    while (file->data != NULL) {
-        if (strncmp(filename, file->name, 511) == 0)
-            break;
+  while (file->data != NULL) {
+    if (strncmp(filename, file->name, 511) == 0)
+      break;
 
-        file++;
+    file++;
+  }
+  if (file->data == NULL)
+    return -1;
+
+  // Check if we are able to use the fd slot one above the last allocated FD
+  int fd = last_allocated_fd + 1;
+  if (fd_is_opened(fd, open_files, num_fds)) {
+    // No, so fall back to linear iteration over all slots
+    fd = OPEN_FILE_FD_OFFSET;
+    while (fd_is_valid(fd, num_fds)) {
+      if (!fd_is_opened(fd, open_files, num_fds))
+        break;
+      fd++;
     }
-    if (file->data == NULL)
-        return -1;
+  }
 
-    // Assume 0 and 1 are used for stdin and stdout
-    // Use 2 even though it is usually used for stderr
-    // TODO: Introduce a next_fd variable for a high probability O(1) fd slot allocation.
-    int fd_slot = 2;
-    while (fd_slot < NUM_FDS) {
-        if (open_files[fd_slot].file == NULL)
-            break;
-        fd_slot++;
-    }
+  if (!fd_is_valid(fd, num_fds))
+    return -1;
 
-    if (fd_slot == NUM_FDS)
-        return -1;
+  FILEDESC* fd_slot = get_fd_entry(fd, open_files, num_fds);
 
-    open_files[fd_slot].pos = 0;
-    open_files[fd_slot].file = file;
+  fd_slot->pos = 0;
+  fd_slot->file = file;
 
-    return fd_slot;
-}
-
-
-static void* heap_head = (void*)0x80300000;
-void* malloc(unsigned long long size) {
-    void* return_ptr;
-
-    return_ptr = heap_head;
-    heap_head += size;
-
-    printf("-- malloc: allocated 0x%x bytes at addr %p-%p\n", size, return_ptr, heap_head);
-
-    return return_ptr;
+  return fd;
 }

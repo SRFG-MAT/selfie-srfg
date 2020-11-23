@@ -1,89 +1,77 @@
+HOSTCC:=$(CC)
+
 PREFIX=riscv64-linux-gnu-
 CC=$(PREFIX)gcc
 LD=$(PREFIX)ld
+AS=$(CC)
 OBJCOPY=$(PREFIX)objcopy
+QEMU=qemu-system-riscv64
 
 # Our ABI, architecture and memory model must match with OpenSBI
-CFLAGS=-g3 -mabi=lp64 -march=rv64imafdc -mcmodel=medany -ffreestanding -nostdlib -Iinclude -Iopensbi/include -Wl,--build-id=none
+CFLAGS=-g3 -mabi=lp64 -march=rv64imafdc -mcmodel=medany -ffreestanding -nostdlib -Iinclude -Iopensbi/include -Wl,--build-id=none -Wall -Wextra -MMD -MP
 ASFLAGS=$(CFLAGS)
 LDFLAGS=-r -b elf64-littleriscv -m elf64lriscv
+QEMUFLAGS=-M virt -m 128M -nographic -bios none
+# for debugging, add '-gdb tcp::9000 -S' to the QEMUFLAGS
 
 SELFIE_PATH = ..
+BUILD_DIR = build
 
 OPENSBI_SOURCE_URL=https://github.com/riscv/opensbi/archive/$(OPENSBI_RELEASE).tar.gz
 OPENSBI_RELEASE=v0.7
 OPENSBI_VERSION_FILE=opensbi/opensbi_version
 
-SBI_WRAPPER_OBJS = sbi_wrapper.o tinycstd.o console.o heap.o mmu.o selfie.o sbi_files.o syscalls.o trap.o asm/crt.o asm/trap.o
-SBI_WRAPPER_FILES_PACKAGE = $(SELFIE_PATH)/selfie.m $(SELFIE_PATH)/selfie.c $(SELFIE_PATH)/examples/hello-world.c
+SBI_WRAPPER_SRCS_COMMON = bootstrap.c tinycstd.c console.c filesystem.c files_package.c syscalls.c asm/crt.S diag.c sbi_ecall.c
+SBI_WRAPPER_SRCS_LIBRARY = bootstrap_library.c selfie.c glue_libraryos.c
+SBI_WRAPPER_SRCS_KERNEL =  bootstrap_kernel.c mmu.c context.c trap.c elf.c asm/trap.S
+
+SBI_WRAPPER_FILES_PACKAGE = $(SELFIE_PATH)/selfie.m $(SELFIE_PATH)/selfie.c $(SELFIE_PATH)/examples/hello-world.c $(SELFIE_PATH)/hello-world.m
+ASM_STRUCT_HEADERS = include/context.h
 
 include defines.mk
+include filesystem.mk
 
-all: selfie-qemu selfie-fu540 selfie-k210
+# ==============================================================================
 
-.PHONY: selfie-qemu selfie-fu540 selfie-k210
-selfie-qemu: selfie-qemu.elf
-selfie-fu540: selfie-fu540.elf
-selfie-k210: selfie-k210.bin
-
-selfie-k210.bin: selfie-k210.elf
-	$(OBJCOPY) -S -O binary --file-alignment 4096 --gap-fill 0xFF $^ $@
+#selfie-k210.bin: selfie-k210.elf
+#	$(OBJCOPY) -S -O binary --file-alignment 4096 --gap-fill 0xFF $^ $@
 
 
-$(eval $(call generate_payload_rules,qemu,0x80000000,0x200000))
-$(eval $(call generate_payload_rules,fu540,0x80000000,0x200000))
-$(eval $(call generate_payload_rules,k210,0x80000000,0x1A000))
+$(eval $(call add-board,qemu,0x80000000,0x200000,qemu/virt))
+$(eval $(call add-board,fu540,0x80000000,0x200000,sifive/fu540))
+$(eval $(call add-board,k210,0x80000000,0x1A000,kendryte/k210))
 
-$(eval $(call generate_selfie_sbi_rule,qemu,qemu/virt,0x80000000,0x200000))
-$(eval $(call generate_selfie_sbi_rule,fu540,sifive/fu540,0x80000000,0x200000))
-$(eval $(call generate_selfie_sbi_rule,k210,kendryte/k210,0x80000000,0x1A000))
+$(eval $(call add-build-profile,kernel,$(SBI_WRAPPER_SRCS_COMMON) $(SBI_WRAPPER_SRCS_KERNEL),KERN_TYPE=kernel))
+$(eval $(call add-build-profile,library,$(SBI_WRAPPER_SRCS_COMMON) $(SBI_WRAPPER_SRCS_LIBRARY),KERN_TYPE=library))
 
-asm/crt.o: opensbi
-selfie.o: $(SELFIE_PATH)/selfie.c
-	$(CC) $(CFLAGS) -D'uint64_t = unsigned long long int' -c $^ -o $@
+$(eval $(call add-all-targets))
+$(eval $(call add-all-target-aliases))
 
-selfie_bare_metal.o: $(SBI_WRAPPER_OBJS)
-	$(LD) $(LDFLAGS) $^ -o $@
+.PHONY: all
+all: all-selfie-elf all-selfie-opensbi-elf
 
-sbi_files.c: $(SBI_WRAPPER_FILES_PACKAGE)
-	@printf "#include \"sbi_files.h\"\n\n" >$@
+include/asm_offsets.h: $(ASM_STRUCT_HEADERS)
+	$(HOSTCC) -I. tools/asm_struct_macro_generator.c -o tools/asm_struct_macro_generator
+	tools/asm_struct_macro_generator > "$@"
 
-	@# Package all files as a byte array using xxd
-	@for file in $^ ;\
-	do \
-		BASENAME=`basename $$file` ;\
-		VARIABLENAME=`echo $$BASENAME | sed 's/\W/_/g'`; \
-		echo "static const char $${VARIABLENAME}[] = {" >> $@; \
-		cat "$$file" | xxd -i >>$@; \
-		echo "};" >>$@; \
-		printf "\n\n"					>>$@; \
-	done;
 
-	@# Create a mapping to all packaged files
-	@echo "static const FILE file_defs[] = {" >>$@;
-	@for file in $^;\
-	do \
-		BASENAME=`basename $$file` ;\
-		VARIABLENAME=`echo $$BASENAME | sed 's/\W/_/g'`; \
-		FILESIZE=`wc -c "$$file" | awk '{print $$1}'`; \
-		echo "  {\"$$BASENAME\", $$VARIABLENAME, $$FILESIZE}," >>$@; \
-	done;
-	@echo "  {\"\", (const char*)NULL, 0}," >>$@;
-	@echo "};" >>$@;
-	@echo "const FILE* files = file_defs;" >>$@;
 
-$(SELFIE_PATH)/selfie.m: $(SELFIE_PATH)/selfie.c
-	$(MAKE) -C$(SELFIE_PATH) selfie.m
 
 
 # Clean-up
 .PHONY: clean
-clean:
-	rm -rf opensbi
-	rm -f *.o
+clean: clean-fs-package
+	@case "`realpath $(BUILD_DIR)`" in \
+		"`realpath $$PWD`/"*) rm -rf $(BUILD_DIR);;\
+		*) echo "WARNING: Build directory '$(BUILD_DIR)' has not been removed as it is not a descending directory";;\
+	esac
+
 	rm -f *.elf
 	rm -f *.bin
-	rm -f sbi_files.c
+	rm -f include/asm_offsets.h
+.PHONY: distclean
+distclean: clean
+	rm -rf opensbi
 
 
 # OpenSBI fetch target
@@ -101,3 +89,57 @@ opensbi:
 debug:
 	$(eval CFLAGS += -DDEBUG)
 	@echo "Enabled debug macro"
+
+
+.PHONY: list-targets
+list-targets:
+	@echo "List of targets:"
+	@echo "===================================================="
+	@echo "The build artifacts are placed in directory $(BUILD_DIR)."
+	@echo "It contains a subdirectory for each supported board and these"
+	@echo "subdirectories themselves contain subdirectories for each profile."
+	@echo "There are three main artifacts:"
+	@echo " -selfie.elf: The freestanding selfie.elf executable. Requires a bootloader that loads OpenSBI as runtime, e.g. U-Boot"
+	@echo " -selfie.bin: Similar to selfie.elf, but not as ELF, but as a flat binary (required by some bootloaders)"
+	@echo " -selfie-opensbi.elf: selfie.bin linked with OpenSBI (FW_PAYLOAD). Required if OpenSBI is not loaded by the bootloader"
+
+	@echo "===================================================="
+	@echo "all                   : Builds everything"
+	@echo "all-selfie-elf        : Builds selfie.elf for each board and each profile"
+	@echo "all-selfie-bin        : Builds selfie.bin for each board and each profile"
+	@echo "all-selfie-opensbi-elf: Builds selfie-opensbi.elf for each board and each profile"
+	@echo "----------------------------------------------------"
+	@for board in $(ALL_BOARDS);\
+	 do\
+		echo "selfie-$$board.elf        : Builds selfie.elf for $$board and each profile";\
+		echo "selfie-$$board.bin        : Builds selfie.bin for $$board and each profile";\
+		echo "selfie-opensbi-$$board.elf: Builds selfie-opensbi.elf for $$board and each profile";\
+		echo "----------------------------------------------------";\
+	 done;
+
+	@for board in $(ALL_BOARDS);\
+	 do\
+		for profile in $(ALL_PROFILES);\
+		do\
+			echo "selfie-$$board-$$profile.elf        : Builds selfie.elf for $$board and $$profile";\
+			echo "selfie-$$board-$$profile.bin        : Builds selfie.bin for $$board and $$profile";\
+			echo "selfie-opensbi-$$board-$$profile.elf: Builds selfie-opensbi.elf for $$board and $$profile";\
+			echo "....................................................";\
+		done;\
+		echo "----------------------------------------------------";\
+	 done;
+
+.PHONY: test
+test: selfie-opensbi-qemu.elf
+	@echo "============================================================"
+	@echo "       Testing library mode build artifact on QEMU...       "
+	@echo "============================================================"
+	$(QEMU) $(QEMUFLAGS) -kernel build/qemu/library/selfie-opensbi.elf
+	@echo "============================================================"
+	@echo "       Testing kernel mode build artifact on QEMU...        "
+	@echo "============================================================"
+	$(QEMU) $(QEMUFLAGS) -kernel build/qemu/kernel/selfie-opensbi.elf
+
+
+-include $(ALL_DEPS)
+.DEFAULT_GOAL := all
