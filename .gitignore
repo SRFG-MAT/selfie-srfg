@@ -5,6 +5,7 @@
 *.btor2
 *.h
 *.x86
+*.vs
 selfie
 selfie.exe
 babysat
