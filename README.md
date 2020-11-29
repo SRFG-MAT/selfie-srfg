@@ -21,7 +21,7 @@ To merge Selfie-Branch changes to srfg-selfie master branch:
 - "git merge new-branch" (fix all non-auto-merged conflicts by hand)
 
 To pull latest changes from original Selfie:
-- git pull selfie
+- git pull selfie <name_of_branch>
 
 
 ## Goals for this project
